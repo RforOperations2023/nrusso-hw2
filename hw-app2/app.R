@@ -40,10 +40,11 @@ ui <- dashboardPage(
                 tabItems(
                   tabItem(tabName = 'Plots',
                           fluidRow(
-                            box(plotlyOutput("scatter")),
-                            box(plotlyOutput("lol")),
+                            tabBox(title = "Plots", width = 10,
+                             tabPanel("Scatterplot",plotlyOutput("scatter")),
+                             tabPanel("Dot Plot",plotlyOutput("lol")),
                           
-                            box(title = "Select",
+                             box(title = "Select",
                                 selectInput(inputId = 'y',
                                             label = 'Sales (in millions)',
                                             choices = c("NA_Sales" = "NA_Sales",
@@ -51,16 +52,16 @@ ui <- dashboardPage(
                                                         "JP_Sales" = "JP_Sales",
                                                         "Global_Sales" = "Global_Sales"),
                                             selected = 'Global Sales')),
-                            box(title = "Slider to subset year",
+                             box(title = "Slider to subset year in scatterplot",
                                 sliderInput("YearRelease",
-                                            "Release Year:",
+                                            "Release Year For Scatterplot:",
                                             min = min(df$Year, na.rm = T),
                                             max = max(df$Year, na.rm = T),
                                             value = c(min(df$Year, na.rm = T), max(df$Year, na.rm = T)),
                                             step = 1)),
-                            box(title = "select Publisher",
+                             box(title = "select Publisher",
                                 selectInput(inputId = "Pubs",
-                                            label = 'Publisher:',
+                                            label = 'Publisher for Dot Plot Subset:',
                                             choices = sort(unique
                                                            (df$Publisher)),
                                             multiple = TRUE,
@@ -76,7 +77,7 @@ ui <- dashboardPage(
                         fluidPage(
                           box(title = "Games in year subset",
                               DT::dataTableOutput("table"), width = 12))
-              ))
+              )))
   
 )#this one is for dashboard page
 
@@ -93,7 +94,8 @@ server <- function(input, output) {
   output$scatter <- renderPlotly({
     dat <- subset(YRInput())
 
-    ggplotly(
+    ggplotly(text=paste("Game:", 
+                        dat$Name),
     ggplot(dat, aes_string(x = dat$Year, y = input$y)) +
       geom_point(color = 'blue'))
 
@@ -114,20 +116,24 @@ server <- function(input, output) {
   output$lol <- renderPlotly({
     dat <- subset(PbInput())
     
-    ggplot(dat, aes(x=Genre, y=Global_Sales)) +
-      geom_segment( aes(x=Genre, xend=Genre, y=0, yend=Global_Sales), color="skyblue") +
+    ggplot(data, aes(x=Genre, y=Global_Sales, text=paste("Game:", Name))) +
+      geom_segment( aes(x=Genre, xend=Genre, y=0, yend=Global_Sales), 
+                    color="skyblue") +
       geom_point( color="orange", size=4, alpha=0.6) +
       theme_light() +
       coord_flip() +
       theme(
         panel.grid.major.y = element_blank(),
         panel.border = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank()
+      )
     
   })
-  
+  #sourced code for layout from 
+  #https://r-graph-gallery.com/303-lollipop-plot-with-2-values.html
 }
 
+#               hovertemplate = paste('%{x}', '<br>lifeExp: %{text:.2s}<br>'),
 
 
 shinyApp(ui, server)
