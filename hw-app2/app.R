@@ -36,12 +36,12 @@ sidebar <- dashboardSidebar(
   sidebarMenu(
     
     selectInput(inputId = 'y',
-                label = 'Y Axis',
+                label = 'Sales (in millions)',
                 choices = c("NA_Sales" = "NA_Sales",
                             "EU_Sales" = "EU_Sales",
                             "JP_Sales" = "JP_Sales",
                             "Global_Sales" = "Global_Sales"),
-                selected = 'Global_Sales'),
+                selected = 'Global Sales'),
     
     sliderInput("YearRelease",
                 "Release Year:",
@@ -76,29 +76,28 @@ ui <- dashboardPage(header, sidebar, body)
 server <- function(input, output, session) {
   
   YRInput <- reactive({
-    df1 <- df %>%
+    df <- df %>%
       
     filter(Year >= input$YearRelease[1] & Year <= input$YearRelease[2])
+    
+
+  return(df)
 
   })
   
   output$scatter <- renderPlotly({
+    dat <- subset(YRInput())
+    
     ggplotly(
-      ggplot(data = YRInput(), aes(x = Year, y = input$y)) +
-        geom_point())
+    ggplot(dat, aes_string(x = dat$Year, y = input$y)) + 
+      geom_point(color = 'blue'))
+    
+
   })
 
   
 
   
-  # output$scatter <- renderPlotly({
-  #   ggplotly(
-  #     ggplot(data = df, aes_string(x = df$Year, y = input$y)) +
-  #       geom_point(alpha = input$alpha),
-  #     tooltip = c("x", "y"))
-  # })
-  
 }
 
-# Run the application ----------------------------------------------
 shinyApp(ui = ui, server = server)
